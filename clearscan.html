@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearScan — Diagnostic Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F0EFE9;--border:#E3E1DA;
+  --text:#1A1A18;--text2:#6B6A62;--text3:#A0A097;
+  --teal:#0A9E8C;--teal-light:#E4F5F3;--teal-dark:#077A6B;
+  --green:#22C55E;--green-light:#DCFCE7;--red:#EF4444;--red-light:#FEE2E2;
+  --amber:#F59E0B;--amber-light:#FEF3C7;
+  --shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 20px rgba(0,0,0,.09);
+  --radius:10px;--font-d:'Cormorant Garamond',Georgia,serif;--font-b:'DM Sans',-apple-system,sans-serif;
+  --sw:52px;--so:222px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;line-height:1.5}
+
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:#F7F6F3;z-index:999;display:flex;align-items:center;justify-content:center}
+#loginScreen.hidden{display:none}
+.login-card{background:var(--surface);border-radius:18px;padding:40px 44px;width:360px;box-shadow:0 8px 40px rgba(0,0,0,.1)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.login-mark{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;width:24px;height:24px}
+.login-mark span{background:var(--teal);border-radius:2px}
+.login-mark span:nth-child(3),.login-mark span:nth-child(6),.login-mark span:nth-child(9){opacity:.35}
+.login-brand{font-family:var(--font-d);font-size:20px;font-weight:500;color:var(--text)}
+.login-title{font-family:var(--font-d);font-size:26px;font-weight:400;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:24px}
+.login-fgrp{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.login-label{font-size:10.5px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.login-input{height:40px;border:1.5px solid var(--border);border-radius:9px;padding:0 13px;font-family:var(--font-b);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;width:100%}
+.login-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,158,140,.08)}
+.login-input.err{border-color:var(--red)}
+.login-err{font-size:11.5px;color:var(--red);margin-top:10px;min-height:16px;text-align:center}
+.login-btn{width:100%;height:42px;background:var(--teal);color:#fff;border:none;border-radius:9px;font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;transition:background .15s;margin-top:20px}
+.login-btn:hover{background:var(--teal-dark)}
+.login-hint{margin-top:16px;padding:12px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--text3);text-align:center;line-height:1.6}
+
+/* ── APP SHELL ── */
+#app{display:none}
+#app.visible{display:block}
+
+/* ── SIDEBAR ── */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sw);background:#18181A;z-index:100;transition:width .25s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column}
+.sidebar:hover{width:var(--so)}
+.sb-logo{padding:18px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;display:flex;align-items:center;gap:11px;white-space:nowrap}
+.sb-mark{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;width:22px;height:22px;flex-shrink:0}
+.sb-mark span{background:var(--teal);border-radius:2px;display:block}
+.sb-mark span:nth-child(3),.sb-mark span:nth-child(6),.sb-mark span:nth-child(9){opacity:.4}
+.sb-name{font-family:var(--font-d);font-size:15px;color:#fff;font-weight:500;letter-spacing:.3px;opacity:0;transition:opacity .2s;white-space:nowrap}
+.sidebar:hover .sb-name{opacity:1}
+.sb-nav{flex:1;padding:10px 0;display:flex;flex-direction:column;gap:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 15px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.05)}
+.nav-item.active{color:var(--teal)}
+.nav-item svg{flex-shrink:0;width:18px;height:18px}
+.nav-item .nl{opacity:0;transition:opacity .2s;font-size:13px;font-weight:400}
+.sidebar:hover .nl{opacity:1}
+.nav-item.hidden{display:none}
+.sb-footer{padding:12px 14px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.logout-btn{display:flex;align-items:center;gap:11px;width:100%;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.4);transition:color .15s;white-space:nowrap;padding:0}
+.logout-btn:hover{color:var(--red)}
+.logout-btn svg{flex-shrink:0;width:18px;height:18px}
+.logout-lbl{opacity:0;transition:opacity .2s;font-size:12px;font-family:var(--font-b)}
+.sidebar:hover .logout-lbl{opacity:1}
+.role-badge{display:none;align-items:center;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-left:auto;flex-shrink:0}
+.sidebar:hover .role-badge{display:flex}
+.role-badge.admin{background:rgba(10,158,140,.25);color:var(--teal)}
+.role-badge.lab{background:rgba(245,158,11,.18);color:#D97706}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sw);min-height:100vh;display:flex;flex-direction:column}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.h-left .h-title{font-family:var(--font-d);font-size:22px;font-weight:500;color:var(--text);letter-spacing:.2px}
+.h-left .h-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:10px}
+.date-nav{display:flex;align-items:center;gap:6px}
+.date-nav button{width:28px;height:28px;border:1px solid var(--border);background:var(--surface);border-radius:7px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.date-nav button:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.date-disp{font-size:13px;font-weight:500;min-width:130px;text-align:center;color:var(--text);cursor:pointer;padding:0 6px;border-radius:7px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid transparent;transition:all .15s;gap:5px}
+.date-disp:hover{border-color:var(--border);background:var(--surface2)}
+.date-disp.open{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark)}
+.btn-today{height:28px;padding:0 13px;border:1px solid var(--border);background:var(--surface);border-radius:7px;cursor:pointer;font-family:var(--font-b);font-size:12px;font-weight:500;color:var(--text2);transition:all .15s;white-space:nowrap}
+.btn-today:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.content{flex:1}
+.page{display:none}
+.page.active{display:block}
+
+/* ── CALENDAR ── */
+.cal-wrap{position:relative}
+.cal-drop{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.13);width:272px;padding:16px;z-index:50;display:none;animation:calIn .18s cubic-bezier(.4,0,.2,1)}
+.cal-drop.open{display:block}
+@keyframes calIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-month{font-family:var(--font-d);font-size:16px;font-weight:500;color:var(--text);cursor:default}
+.cal-nav{width:26px;height:26px;border:1px solid var(--border);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
+.cal-nav:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;padding:3px 0 7px}
+.cal-day{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:7px;font-size:12.5px;cursor:pointer;color:var(--text);transition:all .12s}
+.cal-day:hover{background:var(--surface2)}
+.cal-day.other{color:var(--text3)}
+.cal-day.today{font-weight:700;color:var(--teal)}
+.cal-day.today::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--teal);opacity:.6}
+.cal-day.selected{background:var(--teal);color:#fff;font-weight:600}
+.cal-day.selected.today::after{background:#fff}
+.cal-day.has-apt::before{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--teal-dark);opacity:.7}
+.cal-day.selected.has-apt::before{background:#fff}
+.cal-day.selected:hover{background:var(--teal-dark)}
+.cal-footer{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:center}
+.cal-today-btn{font-family:var(--font-b);font-size:12px;font-weight:500;color:var(--teal-dark);background:var(--teal-light);border:none;border-radius:7px;padding:5px 16px;cursor:pointer;transition:all .15s}
+.cal-today-btn:hover{background:var(--teal);color:#fff}
+
+/* ── SCHEDULE ── */
+.sch-table{width:100%;border-collapse:collapse}
+.sch-head{background:var(--surface);border-bottom:2px solid var(--border);position:sticky;top:57px;z-index:9}
+.sch-head td{padding:8px 16px;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
+.sch-head td.tc{width:72px;border-right:1px solid var(--border);text-align:right;padding-right:14px}
+.sch-table tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.sch-table tr:hover{background:rgba(10,158,140,.028)}
+.tc{width:72px;padding:0 12px 0 0;font-size:11.5px;font-weight:500;color:var(--text3);border-right:1px solid var(--border);text-align:right;white-space:nowrap;vertical-align:middle;height:44px;font-variant-numeric:tabular-nums;background:var(--surface);position:sticky;left:0}
+.tc.hr{color:var(--text2);font-weight:700;font-size:12px}
+.sc{padding:4px 16px;vertical-align:middle;height:44px}
+.add-hint{display:flex;align-items:center;gap:5px;color:var(--teal);font-size:11.5px;font-weight:500;opacity:0;transition:opacity .15s;cursor:pointer;user-select:none}
+.sch-table tr:hover .add-hint{opacity:1}
+.add-hint svg{width:13px;height:13px}
+.pcard{display:grid;grid-template-columns:minmax(150px,1.6fr) 110px minmax(130px,1.2fr) 90px 90px;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;transition:all .15s;width:100%}
+.pcard.st-arrived{background:var(--green-light)}
+.pcard.st-missed{background:var(--red-light)}
+.cn{font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+.cs{display:flex;align-items:center;gap:5px}
+.stag{background:var(--teal-light);color:var(--teal-dark);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sdot.a{background:var(--green)}.sdot.m{background:var(--red)}.sdot.p{background:var(--text3)}
+.cst{display:flex;justify-content:flex-end}
+
+/* ── INNER PAGES ── */
+.ipage{padding:24px 28px}
+.phead{font-family:var(--font-d);font-size:26px;font-weight:500;margin-bottom:5px}
+.pdesc{font-size:13px;color:var(--text3);margin-bottom:24px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;transition:box-shadow .15s}
+.card:hover{box-shadow:var(--shadow-md)}
+.ctitle{font-weight:500;color:var(--text);margin-bottom:3px}
+.cmeta{font-size:12px;color:var(--text3)}
+.cacts{position:absolute;top:12px;right:12px;display:flex;gap:5px;opacity:0;transition:opacity .15s}
+.card:hover .cacts{opacity:1}
+.cbtn{width:26px;height:26px;border:1px solid var(--border);background:var(--surface);border-radius:6px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.cbtn.edit:hover{background:var(--teal-light);color:var(--teal-dark);border-color:var(--teal)}
+.cbtn.del:hover{background:var(--red-light);color:var(--red);border-color:var(--red)}
+.add-card{background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text3);font-size:13px;font-weight:500;transition:all .15s;min-height:72px}
+.add-card:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ── SERVICES ── */
+.ssec{margin-bottom:22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.stitle{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:10px 18px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border);position:relative}
+.srow:last-child{border-bottom:none}
+.srow:hover .srow-acts{opacity:1}
+.sname{font-size:13px;color:var(--text);flex:1;padding-right:8px}
+.sprice{font-size:14px;font-weight:600;color:var(--teal);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sorig{font-size:11px;color:var(--text3);text-decoration:line-through;margin-right:6px;font-variant-numeric:tabular-nums}
+.spkg{display:inline-flex;align-items:center;background:var(--teal-light);color:var(--teal-dark);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:500;margin-left:7px}
+.ssaved{display:inline-flex;align-items:center;background:var(--amber-light);color:#92400E;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:500;margin-left:5px}
+.srow-acts{opacity:0;transition:opacity .15s;margin-left:10px;flex-shrink:0}
+
+/* ── REPORTS ── */
+.rf{display:flex;gap:9px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.rtw{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.rtable{width:100%;border-collapse:collapse}
+.rtable th{text-align:left;padding:9px 14px;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+.rtable th:hover{color:var(--text)}
+.rtable td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text)}
+.rtable tr:last-child td{border-bottom:none}
+.rtable tr:hover td{background:rgba(10,158,140,.02)}
+.rtotals{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-top:12px;padding:16px 20px}
+.rttitle{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:12px}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ti{text-align:center;padding:12px;background:var(--surface2);border-radius:8px}
+.tilabel{font-size:11px;color:var(--text3);margin-bottom:3px}
+.tiamt{font-size:18px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.ti.teal .tiamt{color:var(--teal)}
+
+/* ── SETTINGS ── */
+.sett-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:14px}
+.sett-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.sett-desc{font-size:12px;color:var(--text3);margin-bottom:16px}
+.branch-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+.branch-row:last-child{border-bottom:none}
+.branch-name{font-size:13px;font-weight:500}
+.branch-addr{font-size:11px;color:var(--text3);margin-top:1px}
+.branch-actions{display:flex;gap:6px}
+
+/* ── MODAL ── */
+.mo{position:fixed;inset:0;background:rgba(26,26,24,.42);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.mo.open{display:flex}
+.mbox{background:var(--surface);border-radius:16px;padding:28px 32px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.14);max-height:90vh;overflow-y:auto;position:relative}
+.mbox.sm{max-width:420px}
+.mtitle{font-family:var(--font-d);font-size:22px;font-weight:500;margin-bottom:4px}
+.msub{font-size:12px;color:var(--text3);margin-bottom:22px}
+.mclose{position:absolute;top:16px;right:16px;width:28px;height:28px;border:none;background:var(--surface2);border-radius:50%;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s;line-height:1}
+.mclose:hover{background:var(--red);color:#fff}
+.mfoot{display:flex;gap:8px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border);justify-content:space-between;align-items:center}
+
+/* ── FORM ── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ff{grid-column:1/-1}
+.fgrp{display:flex;flex-direction:column;gap:5px}
+.flabel{font-size:10.5px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.finput,.fsel{height:38px;border:1.5px solid var(--border);border-radius:8px;padding:0 12px;font-family:var(--font-b);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;width:100%}
+.finput:focus,.fsel:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,158,140,.08)}
+.finput.err,.fsel.err{border-color:var(--red)}
+.ferr{font-size:11px;color:var(--red);margin-top:2px;min-height:15px}
+.fsel{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B6A62' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:16px;padding-right:32px}
+.pdisplay{background:var(--teal-light);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.pdlabel{font-size:12px;color:var(--teal-dark);font-weight:500}
+.pdamount{font-size:20px;font-weight:600;color:var(--teal);font-variant-numeric:tabular-nums}
+.pdorig{font-size:11px;color:var(--text3);text-decoration:line-through;margin-top:1px;text-align:right}
+.st-row{display:flex;gap:8px;margin-top:4px}
+.st-btn{flex:1;height:36px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-family:var(--font-b);font-size:12px;font-weight:500;background:var(--surface);color:var(--text2);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.st-btn.ac-a{background:var(--green-light);border-color:var(--green);color:#15803D}
+.st-btn.ac-m{background:var(--red-light);border-color:var(--red);color:#B91C1C}
+.pay-row{display:flex;gap:7px;margin-top:4px}
+.pay-btn{flex:1;height:32px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;font-family:var(--font-b);font-size:11px;font-weight:500;background:var(--surface);color:var(--text2);transition:all .15s}
+.pay-btn.ac{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark)}
+
+/* ── SEARCHABLE DROPDOWN ── */
+.sd-wrap{position:relative}
+.sd-input{height:38px;border:1.5px solid var(--border);border-radius:8px;padding:0 32px 0 12px;font-family:var(--font-b);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;width:100%;cursor:pointer}
+.sd-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,158,140,.08);border-radius:8px 8px 0 0}
+.sd-input.err{border-color:var(--red)}
+.sd-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text3)}
+.sd-list{position:absolute;top:calc(100% - 0px);left:0;right:0;background:var(--surface);border:1.5px solid var(--teal);border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:40;display:none;box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.sd-list.open{display:block}
+.sd-item{padding:9px 12px;font-size:13px;cursor:pointer;color:var(--text);transition:background .1s}
+.sd-item:hover{background:var(--surface2)}
+.sd-item.active{background:var(--teal-light);color:var(--teal-dark);font-weight:500}
+.sd-empty{padding:10px 12px;font-size:12px;color:var(--text3);font-style:italic}
+.sd-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;line-height:1;padding:2px;transition:color .15s;display:none}
+.sd-clear:hover{color:var(--text)}
+
+/* ── BUTTONS ── */
+.btn{height:38px;padding:0 20px;border-radius:8px;font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-p{background:var(--teal);color:#fff}
+.btn-p:hover{background:var(--teal-dark)}
+.btn-p:disabled{background:var(--border);color:var(--text3);cursor:not-allowed}
+.btn-p:disabled:hover{background:var(--border)}
+.btn-g{background:transparent;color:var(--text2);border:1.5px solid var(--border)}
+.btn-g:hover{background:var(--surface2)}
+.btn-d{background:transparent;color:var(--red);border:1.5px solid transparent;padding:0 12px}
+.btn-d:hover{background:var(--red-light);border-color:var(--red)}
+
+/* ── CONFIRM ── */
+.cmo{position:fixed;inset:0;background:rgba(26,26,24,.5);z-index:300;display:none;align-items:center;justify-content:center}
+.cmo.open{display:flex}
+.cbox{background:var(--surface);border-radius:14px;padding:28px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center}
+.cicon{width:48px;height:48px;background:var(--red-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px}
+.ctitle{font-size:16px;font-weight:600;margin-bottom:8px}
+.ctext{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.cbtns{display:flex;gap:8px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.bg{background:var(--green-light);color:#15803D}
+.br{background:var(--red-light);color:#B91C1C}
+.bt{background:var(--teal-light);color:var(--teal-dark)}
+.bk{background:var(--surface2);color:var(--text3)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#18181A;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:500;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);box-shadow:var(--shadow-md);max-width:300px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-left:3px solid var(--green)}
+.toast.er{border-left:3px solid var(--red)}
+
+/* ── ACCESS DENIED ── */
+.access-denied{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:12px;color:var(--text3)}
+.access-denied svg{width:48px;height:48px;opacity:.3}
+.access-denied strong{font-size:16px;font-weight:500;color:var(--text2)}
+.access-denied span{font-size:13px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+input[type=date]::-webkit-calendar-picker-indicator{opacity:.5;cursor:pointer}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-mark"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="login-brand">ClearScan</div>
+    </div>
+    <div class="login-title">Добро пожаловать</div>
+    <div class="login-sub">Диагностический центр · Войдите для работы</div>
+    <div class="login-fgrp">
+      <label class="login-label">Логин</label>
+      <input class="login-input" id="loginUser" placeholder="Введите логин" autocomplete="off">
+    </div>
+    <div class="login-fgrp">
+      <label class="login-label">Пароль</label>
+      <input class="login-input" id="loginPass" type="password" placeholder="Введите пароль">
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <div class="login-hint">Администратор: <b>admin / admin</b><br>Лаборант: <b>lab / lab</b></div>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-mark"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="sb-name">ClearScan</div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-item active" onclick="navigate('schedule')" id="navSchedule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+        <span class="nl">Расписание</span>
+        <span class="role-badge lab" id="roleBadge"></span>
+      </div>
+      <div class="nav-item hidden" onclick="navigate('clinics')" id="navClinics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21V12h6v9"/></svg>
+        <span class="nl">Клиники</span>
+      </div>
+      <div class="nav-item hidden" onclick="navigate('doctors')" id="navDoctors">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="nl">Врачи</span>
+      </div>
+      <div class="nav-item hidden" onclick="navigate('services')" id="navServices">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span class="nl">Услуги</span>
+      </div>
+      <div class="nav-item hidden" onclick="navigate('reports')" id="navReports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 17H7A5 5 0 017 7h2M15 7h2a5 5 0 010 10h-2M8 12h8"/></svg>
+        <span class="nl">Отчёты</span>
+      </div>
+      <div class="nav-item hidden" onclick="navigate('settings')" id="navSettings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="nl">Настройки</span>
+      </div>
+    </div>
+    <div class="sb-footer">
+      <button class="logout-btn" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        <span class="logout-lbl">Выйти</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="header">
+      <div class="h-left">
+        <div class="h-title" id="pageTitle">Расписание</div>
+        <div class="h-sub" id="pageSubtitle">ClearScan Diagnostic Center</div>
+      </div>
+      <div class="h-right" id="headerRight">
+        <button class="btn-today" onclick="goToday()">Сегодня</button>
+        <div class="date-nav">
+          <button onclick="changeDate(-1)">&#8249;</button>
+          <div class="cal-wrap">
+            <div class="date-disp" id="dateDisp" onclick="toggleCal()">
+              <span id="dateDispText">—</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:.5"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="cal-drop" id="calDrop">
+              <div class="cal-head">
+                <button class="cal-nav" onclick="calNav(-1)">&#8249;</button>
+                <div class="cal-month" id="calMonthLabel">—</div>
+                <button class="cal-nav" onclick="calNav(1)">&#8250;</button>
+              </div>
+              <div class="cal-grid" id="calGrid"></div>
+              <div class="cal-footer">
+                <button class="cal-today-btn" onclick="goToday();closeCal()">Перейти на сегодня</button>
+              </div>
+            </div>
+          </div>
+          <button onclick="changeDate(1)">&#8250;</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- SCHEDULE -->
+      <div class="page active" id="page-schedule">
+        <table class="sch-table">
+          <thead>
+            <tr class="sch-head">
+              <td class="tc">Время</td>
+              <td>ФИО пациента</td>
+              <td>Телефон</td>
+              <td>Клиника / Врач</td>
+              <td>Услуга</td>
+              <td>Статус</td>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+
+      <!-- CLINICS -->
+      <div class="page" id="page-clinics">
+        <div class="ipage">
+          <div class="phead">Клиники-партнёры</div>
+          <div class="pdesc">Список клиник, направляющих пациентов</div>
+          <div class="cgrid" id="clinicsGrid"></div>
+        </div>
+      </div>
+
+      <!-- DOCTORS -->
+      <div class="page" id="page-doctors">
+        <div class="ipage">
+          <div class="phead">Врачи</div>
+          <div class="pdesc">Специалисты, назначающие исследования</div>
+          <div class="cgrid" id="doctorsGrid"></div>
+        </div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="page" id="page-services">
+        <div class="ipage">
+          <div class="phead">Услуги и цены</div>
+          <div class="pdesc">Актуальный прайс-лист исследований</div>
+          <div id="servicesContent"></div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="page" id="page-reports">
+        <div class="ipage">
+          <div class="phead">Финансовый отчёт</div>
+          <div class="pdesc">Записи, оплаты и итоги по периоду</div>
+          <div class="rf">
+            <input type="date" class="finput" id="rDateFrom" style="width:148px;height:32px;font-size:12px" onchange="renderReports()">
+            <input type="date" class="finput" id="rDateTo" style="width:148px;height:32px;font-size:12px" onchange="renderReports()">
+            <select class="fsel" id="rPayFilter" style="width:140px;height:32px;font-size:12px" onchange="renderReports()">
+              <option value="">Все виды оплаты</option>
+              <option value="card">Карта</option>
+              <option value="cash">Наличные</option>
+              <option value="transfer">Перевод</option>
+            </select>
+            <button class="btn btn-g" style="height:32px;padding:0 14px;font-size:12px" onclick="clearReportFilters()">Сбросить</button>
+          </div>
+          <div class="rtw">
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th onclick="sortReport('name')">ФИО ↕</th>
+                  <th onclick="sortReport('service')">Услуга ↕</th>
+                  <th onclick="sortReport('date')">Дата ↕</th>
+                  <th onclick="sortReport('price')">Стоимость ↕</th>
+                  <th>Оплата</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="reportBody"></tbody>
+            </table>
+          </div>
+          <div class="rtotals">
+            <div class="rttitle">Итоги</div>
+            <div class="tgrid">
+              <div class="ti teal"><div class="tilabel">Всего</div><div class="tiamt" id="totAll">0 ₽</div></div>
+              <div class="ti"><div class="tilabel">💳 Карта</div><div class="tiamt" id="totCard">0 ₽</div></div>
+              <div class="ti"><div class="tilabel">💵 Наличные</div><div class="tiamt" id="totCash">0 ₽</div></div>
+              <div class="ti"><div class="tilabel">📲 Перевод</div><div class="tiamt" id="totTransfer">0 ₽</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="ipage">
+          <div class="phead">Настройки</div>
+          <div class="pdesc">Управление филиалами и конфигурация</div>
+          <div class="sett-card">
+            <div class="flex-between" style="margin-bottom:4px">
+              <div>
+                <div class="sett-title">Филиалы</div>
+                <div class="sett-desc">Добавляйте и удаляйте точки приёма</div>
+              </div>
+              <button class="btn btn-p" style="height:34px;font-size:12px" onclick="openAddBranch()">+ Добавить</button>
+            </div>
+            <div id="branchList"></div>
+          </div>
+          <div class="sett-card">
+            <div class="sett-title">Рабочее время</div>
+            <div class="sett-desc">Отображаемый диапазон расписания</div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <div class="fgrp">
+                <label class="flabel">Начало</label>
+                <input type="time" id="workStart" class="finput" value="09:00" style="width:110px" onchange="saveWorkTime()">
+              </div>
+              <div class="fgrp">
+                <label class="flabel">Конец</label>
+                <input type="time" id="workEnd" class="finput" value="20:00" style="width:110px" onchange="saveWorkTime()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════════ MODAL: APPOINTMENT ══════════════ -->
+<div class="mo" id="modalApt">
+  <div class="mbox">
+    <button class="mclose" onclick="closeModal()">✕</button>
+    <div class="mtitle" id="mTitle">Новая запись</div>
+    <div class="msub" id="mSub">Заполните данные пациента</div>
+    <div class="fg">
+      <div class="fgrp ff">
+        <label class="flabel">ФИО пациента *</label>
+        <input class="finput" id="fName" placeholder="Иванов Иван Иванович" oninput="autoCapFio(this);checkSaveBtn()" autocomplete="off">
+        <div class="ferr" id="eName"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Телефон *</label>
+        <input class="finput" id="fPhone" placeholder="+7 (___) ___-__-__" maxlength="18" oninput="checkSaveBtn()">
+        <div class="ferr" id="ePhone"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Дата рождения *</label>
+        <input class="finput" type="date" id="fDob">
+        <div class="ferr" id="eDob"></div>
+      </div>
+      <div class="fgrp ff">
+        <label class="flabel">Email</label>
+        <input class="finput" id="fEmail" placeholder="patient@example.com">
+        <div class="ferr" id="eEmail"></div>
+      </div>
+      <!-- ФИО врача — searchable dropdown -->
+      <div class="fgrp ff">
+        <label class="flabel">ФИО врача *</label>
+        <div class="sd-wrap" id="sdDoctor">
+          <input class="sd-input" id="sdDoctorInput" placeholder="Начните вводить имя..." autocomplete="off">
+          <svg class="sd-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          <div class="sd-list" id="sdDoctorList"></div>
+        </div>
+        <div class="ferr" id="eDoctor"></div>
+      </div>
+      <!-- Клиника — searchable dropdown -->
+      <div class="fgrp ff">
+        <label class="flabel">Клиника *</label>
+        <div class="sd-wrap" id="sdClinic">
+          <input class="sd-input" id="sdClinicInput" placeholder="Начните вводить название..." autocomplete="off">
+          <svg class="sd-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          <div class="sd-list" id="sdClinicList"></div>
+        </div>
+        <div class="ferr" id="eClinic"></div>
+      </div>
+      <div class="fgrp ff">
+        <label class="flabel">Услуга *</label>
+        <select class="fsel" id="fService" onchange="calcPrice()">
+          <option value="">— Выберите услугу —</option>
+        </select>
+        <div class="ferr" id="eService"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Скидка (%)</label>
+        <input class="finput" id="fDiscount" type="number" placeholder="0" min="1" max="100" oninput="calcPrice()">
+        <div class="ferr" id="eDiscount"></div>
+      </div>
+      <div class="fgrp ff">
+        <div class="pdisplay">
+          <div>
+            <div class="pdlabel">К оплате</div>
+            <div class="pdorig" id="pOrig"></div>
+          </div>
+          <div class="pdamount" id="pFinal">—</div>
+        </div>
+      </div>
+      <div class="fgrp ff">
+        <label class="flabel">Статус визита</label>
+        <div class="st-row">
+          <button type="button" class="st-btn" id="btnArrived" onclick="setStatus('arrived')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Пришёл
+          </button>
+          <button type="button" class="st-btn" id="btnMissed" onclick="setStatus('missed')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>Не пришёл
+          </button>
+        </div>
+      </div>
+      <div class="fgrp ff">
+        <label class="flabel">Способ оплаты</label>
+        <div class="pay-row">
+          <button type="button" class="pay-btn" id="payCard" onclick="setPayment('card')">💳 Карта</button>
+          <button type="button" class="pay-btn" id="payCash" onclick="setPayment('cash')">💵 Наличные</button>
+          <button type="button" class="pay-btn" id="payTransfer" onclick="setPayment('transfer')">📲 Перевод</button>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-d" id="btnDelete" onclick="confirmDelete()" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>Удалить
+      </button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-g" onclick="closeModal()">Отмена</button>
+        <button class="btn btn-p" id="btnSave" onclick="saveAppointment()" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM DELETE -->
+<div class="cmo" id="modalConfirm">
+  <div class="cbox">
+    <div class="cicon">🗑</div>
+    <div class="ctitle">Удалить запись?</div>
+    <div class="ctext">Вы уверены, что хотите удалить карточку пациента? Это действие необратимо.</div>
+    <div class="cbtns">
+      <button class="btn btn-g" style="flex:1" onclick="closeConfirm()">Отмена</button>
+      <button class="btn" style="flex:1;background:var(--red);color:#fff" onclick="executeDelete()">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CLINIC ADD/EDIT -->
+<div class="mo" id="modalClinic">
+  <div class="mbox sm">
+    <button class="mclose" onclick="closeModalClinic()">✕</button>
+    <div class="mtitle" id="mcTitle">Добавить клинику</div>
+    <div class="msub" style="margin-bottom:18px">Данные клиники-партнёра</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="fgrp">
+        <label class="flabel">Название (EN) *</label>
+        <input class="finput" id="cNameEn" placeholder="MediScan Center">
+        <div class="ferr" id="ecNameEn"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Название (RU) *</label>
+        <input class="finput" id="cNameRu" placeholder="МедиСкан Центр">
+        <div class="ferr" id="ecNameRu"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Адрес</label>
+        <input class="finput" id="cAddr" placeholder="ул. Примерная, 1">
+      </div>
+    </div>
+    <div class="mfoot">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g" onclick="closeModalClinic()">Отмена</button>
+        <button class="btn btn-p" onclick="saveClinic()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DOCTOR ADD/EDIT -->
+<div class="mo" id="modalDoctor">
+  <div class="mbox sm">
+    <button class="mclose" onclick="closeModalDoctor()">✕</button>
+    <div class="mtitle" id="mdTitle">Добавить врача</div>
+    <div class="msub" style="margin-bottom:18px">Специалист, назначающий исследования</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="fgrp">
+        <label class="flabel">ФИО *</label>
+        <input class="finput" id="dName" placeholder="Иванов Иван Иванович">
+        <div class="ferr" id="edName"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Специализация</label>
+        <input class="finput" id="dSpec" placeholder="Рентгенолог">
+      </div>
+    </div>
+    <div class="mfoot">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g" onclick="closeModalDoctor()">Отмена</button>
+        <button class="btn btn-p" onclick="saveDoctor()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SERVICE EDIT -->
+<div class="mo" id="modalService">
+  <div class="mbox sm">
+    <button class="mclose" onclick="closeModalService()">✕</button>
+    <div class="mtitle">Редактировать услугу</div>
+    <div class="msub" style="margin-bottom:18px">Название и стоимость исследования</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="fgrp">
+        <label class="flabel">Название *</label>
+        <input class="finput" id="svName" placeholder="Название услуги">
+        <div class="ferr" id="esvName"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Цена (₽) *</label>
+        <!-- [БАГ 9]: нет проверки минимальной цены. Принимает 0 ₽ -->
+        <input class="finput" id="svPrice" type="number" placeholder="0" min="0">
+        <div class="ferr" id="esvPrice"></div>
+      </div>
+      <div class="fgrp" id="svOrigPriceWrap">
+        <label class="flabel">Цена до скидки (₽) — для пакетов</label>
+        <input class="finput" id="svOrigPrice" type="number" placeholder="0">
+      </div>
+    </div>
+    <div class="mfoot">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g" onclick="closeModalService()">Отмена</button>
+        <button class="btn btn-p" onclick="saveService()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: BRANCH ADD -->
+<div class="mo" id="modalBranch">
+  <div class="mbox sm">
+    <button class="mclose" onclick="closeModalBranch()">✕</button>
+    <div class="mtitle">Добавить филиал</div>
+    <div class="msub" style="margin-bottom:18px">Новое отделение диагностического центра</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="fgrp">
+        <label class="flabel">Название *</label>
+        <input class="finput" id="bName" placeholder="Филиал на Ленина">
+        <div class="ferr" id="ebName"></div>
+      </div>
+      <div class="fgrp">
+        <label class="flabel">Адрес *</label>
+        <input class="finput" id="bAddr" placeholder="ул. Ленина, 12">
+        <div class="ferr" id="ebAddr"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g" onclick="closeModalBranch()">Отмена</button>
+        <button class="btn btn-p" onclick="saveBranch()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════ DEFAULTS ══════════════
+const DEFAULT_CLINICS = [
+  {id:'c1',name:'City Radiology Center',nameRu:'Городской Радиологический Центр',address:'ул. Ленина, 12'},
+  {id:'c2',name:'BrightScan Diagnostics',nameRu:'БрайтСкан Диагностика',address:'пр. Мира, 34'},
+  {id:'c3',name:'NovaDent Clinic',nameRu:'НоваДент Клиника',address:'ул. Советская, 7'},
+  {id:'c4',name:'MedCore Imaging',nameRu:'МедКор Имэджинг',address:'ул. Карла Маркса, 55'},
+  {id:'c5',name:'AlphaRay Medical',nameRu:'АльфаРэй Медицинский',address:'ул. Красной Армии, 89'},
+  {id:'c6',name:'Precision Dental',nameRu:'Прецижн Дентал',address:'пр. Металлургов, 3'},
+  {id:'c7',name:'OrthoClear Institute',nameRu:'ОртоКлир Институт',address:'ул. Вейнбаума, 21'},
+];
+const DEFAULT_DOCTORS = [
+  {id:'d1',name:'Морозова Анна Сергеевна',specialty:'Рентгенолог'},
+  {id:'d2',name:'Волков Сергей Николаевич',specialty:'Челюстно-лицевой хирург'},
+  {id:'d3',name:'Петрова Елена Игоревна',specialty:'Ортодонт'},
+  {id:'d4',name:'Соколов Иван Дмитриевич',specialty:'Рентгенолог'},
+  {id:'d5',name:'Лебедева Мария Александровна',specialty:'Стоматолог'},
+  {id:'d6',name:'Кузнецов Алексей Петрович',specialty:'Имплантолог'},
+  {id:'d7',name:'Смирнова Ольга Владимировна',specialty:'Ортопед'},
+];
+const DEFAULT_SERVICES = [
+  {id:'s1',group:'3d',name:'3D КЛКТ двух челюстей и ВНЧС',price:4000},
+  {id:'s2',group:'3d',name:'КЛКТ двух челюстей',price:3500},
+  {id:'s3',group:'3d',name:'КЛКТ одной челюсти',price:2500},
+  {id:'s4',group:'3d',name:'КЛКТ в области 2-3 зубов',price:1500},
+  {id:'s5',group:'2d',name:'ОПТГ',price:1000},
+  {id:'s6',group:'2d',name:'ТРГ в одной проекции',price:1300},
+  {id:'p1',group:'pkg',name:'КЛКТ двух челюстей + ОПТГ',price:4000,origPrice:4500},
+  {id:'p2',group:'pkg',name:'КЛКТ одной челюсти + ТРГ',price:3500,origPrice:3800},
+  {id:'p3',group:'pkg',name:'ОПТГ + ТРГ',price:2100,origPrice:2300},
+  {id:'p4',group:'pkg',name:'3D КЛКТ двух челюстей + ОПТГ + ТРГ',price:5000,origPrice:6300},
+];
+const DEFAULT_BRANCHES = [
+  {id:'b1',name:'Главный офис',address:'пр. Мира, 102'},
+  {id:'b2',name:'Филиал Октябрьский',address:'ул. Декабристов, 28'},
+];
+const GROUP_LABELS = {'3d':'3D — Конусно-лучевая компьютерная томография','2d':'2D — Рентгенография','pkg':'Пакетные предложения'};
+
+// ══════════════ STATE ══════════════
+let state = {appointments:[],clinics:[],doctors:[],services:[],branches:[],workStart:'09:00',workEnd:'20:00'};
+
+function save() { localStorage.setItem('cs_state', JSON.stringify(state)); }
+function load() {
+  const raw = localStorage.getItem('cs_state');
+  if (raw) { try { state = JSON.parse(raw); } catch(e){} }
+  if (!state.clinics?.length) state.clinics = DEFAULT_CLINICS;
+  if (!state.doctors?.length) state.doctors = DEFAULT_DOCTORS;
+  if (!state.services?.length) state.services = DEFAULT_SERVICES;
+  if (!state.branches?.length) state.branches = DEFAULT_BRANCHES;
+  if (!state.appointments) state.appointments = [];
+  if (!state.workStart) state.workStart = '09:00';
+  if (!state.workEnd) state.workEnd = '20:00';
+}
+function uid() { return 'x'+Math.random().toString(36).slice(2,10); }
+
+// ══════════════ AUTH ══════════════
+// [БАГ 8]: роль хранится в sessionStorage в открытом виде.
+// Можно открыть DevTools, вписать sessionStorage.setItem('cs_role','admin') — и получить права администратора.
+let currentRole = null;
+
+function doLogin() {
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginUser').classList.remove('err');
+  document.getElementById('loginPass').classList.remove('err');
+
+  // [БАГ 8 продолжение]: сравнение без .trim() — "admin " (с пробелом) не пройдёт.
+  if (user === 'admin' && pass === 'admin') {
+    sessionStorage.setItem('cs_role', 'admin');
+    sessionStorage.setItem('cs_user', 'admin');
+    applyRole('admin');
+  } else if (user === 'lab' && pass === 'lab') {
+    sessionStorage.setItem('cs_role', 'lab');
+    sessionStorage.setItem('cs_user', 'lab');
+    applyRole('lab');
+  } else {
+    document.getElementById('loginErr').textContent = 'Неверный логин или пароль';
+    document.getElementById('loginUser').classList.add('err');
+    document.getElementById('loginPass').classList.add('err');
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('cs_role');
+  sessionStorage.removeItem('cs_user');
+  currentRole = null;
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginUser').classList.remove('err');
+  document.getElementById('loginPass').classList.remove('err');
+}
+
+function applyRole(role) {
+  currentRole = role;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+
+  const adminItems = ['navClinics','navDoctors','navServices','navReports','navSettings'];
+  if (role === 'admin') {
+    adminItems.forEach(id => document.getElementById(id).classList.remove('hidden'));
+    document.getElementById('roleBadge').textContent = 'Admin';
+    document.getElementById('roleBadge').className = 'role-badge admin';
+  } else {
+    // lab: только расписание
+    adminItems.forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('roleBadge').textContent = 'Lab';
+    document.getElementById('roleBadge').className = 'role-badge lab';
+  }
+  navigate('schedule');
+}
+
+function checkAuth() {
+  const role = sessionStorage.getItem('cs_role');
+  if (role === 'admin' || role === 'lab') { applyRole(role); }
+}
+
+// ══════════════ NAVIGATION ══════════════
+const TITLES = {schedule:'Расписание',clinics:'Клиники',doctors:'Врачи',services:'Услуги и цены',reports:'Отчёты',settings:'Настройки'};
+
+function navigate(page) {
+  // [БАГ: нет проверки роли — lab может попасть в admin-разделы через navigate() в консоли]
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const idMap = {schedule:'navSchedule',clinics:'navClinics',doctors:'navDoctors',services:'navServices',reports:'navReports',settings:'navSettings'};
+  const ni = document.getElementById(idMap[page]);
+  if (ni) ni.classList.add('active');
+  document.getElementById('pageTitle').textContent = TITLES[page]||page;
+  document.getElementById('headerRight').style.display = page === 'schedule' ? 'flex' : 'none';
+  if (page==='clinics') renderClinics();
+  if (page==='doctors') renderDoctors();
+  if (page==='services') renderServices();
+  if (page==='reports') renderReports();
+  if (page==='settings') renderSettings();
+}
+
+// ══════════════ DATE + CALENDAR ══════════════
+let currentDate = new Date();
+let calViewYear = currentDate.getFullYear();
+let calViewMonth = currentDate.getMonth();
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const DOWS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+function dateKey(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function formatDate(d){ return d.toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'}); }
+function updateDateDisp(){ document.getElementById('dateDispText').textContent = formatDate(currentDate); }
+function changeDate(delta){
+  currentDate=new Date(currentDate); currentDate.setDate(currentDate.getDate()+delta);
+  calViewYear=currentDate.getFullYear(); calViewMonth=currentDate.getMonth();
+  updateDateDisp(); renderSchedule();
+}
+function goToday(){
+  currentDate=new Date(); calViewYear=currentDate.getFullYear(); calViewMonth=currentDate.getMonth();
+  updateDateDisp(); renderSchedule();
+}
+function toggleCal(){
+  const drop=document.getElementById('calDrop'), disp=document.getElementById('dateDisp');
+  if(drop.classList.contains('open')){closeCal();return;}
+  calViewYear=currentDate.getFullYear(); calViewMonth=currentDate.getMonth();
+  renderCal(); drop.classList.add('open'); disp.classList.add('open');
+}
+function closeCal(){ document.getElementById('calDrop').classList.remove('open'); document.getElementById('dateDisp').classList.remove('open'); }
+function calNav(delta){
+  calViewMonth+=delta;
+  if(calViewMonth<0){calViewMonth=11;calViewYear--;}
+  if(calViewMonth>11){calViewMonth=0;calViewYear++;}
+  renderCal();
+}
+function renderCal(){
+  document.getElementById('calMonthLabel').textContent = MONTHS_RU[calViewMonth]+' '+calViewYear;
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  DOWS.forEach(d=>{const el=document.createElement('div');el.className='cal-dow';el.textContent=d;grid.appendChild(el);});
+  const firstDay=new Date(calViewYear,calViewMonth,1);
+  let startDow=firstDay.getDay(); startDow=startDow===0?6:startDow-1;
+  const daysInMonth=new Date(calViewYear,calViewMonth+1,0).getDate();
+  const daysInPrev=new Date(calViewYear,calViewMonth,0).getDate();
+  const todayKey=dateKey(new Date());
+  const selectedKey=dateKey(currentDate);
+  const aptDates=new Set(state.appointments.map(a=>a.date));
+  for(let i=startDow-1;i>=0;i--){
+    const day=daysInPrev-i; const el=document.createElement('div'); el.className='cal-day other'; el.textContent=day;
+    el.onclick=()=>{selectDay(calViewYear,calViewMonth-1,day);}; grid.appendChild(el);
+  }
+  for(let d=1;d<=daysInMonth;d++){
+    const el=document.createElement('div'); el.className='cal-day'; el.textContent=d;
+    const k=`${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(k===todayKey) el.classList.add('today');
+    if(k===selectedKey) el.classList.add('selected');
+    if(aptDates.has(k)) el.classList.add('has-apt');
+    el.onclick=()=>{selectDay(calViewYear,calViewMonth,d);}; grid.appendChild(el);
+  }
+  const totalCells=startDow+daysInMonth;
+  const remaining=totalCells%7===0?0:7-(totalCells%7);
+  for(let d=1;d<=remaining;d++){
+    const el=document.createElement('div'); el.className='cal-day other'; el.textContent=d;
+    el.onclick=()=>{selectDay(calViewYear,calViewMonth+1,d);}; grid.appendChild(el);
+  }
+}
+function selectDay(year,month,day){
+  currentDate=new Date(year,month,day);
+  calViewYear=currentDate.getFullYear(); calViewMonth=currentDate.getMonth();
+  updateDateDisp(); renderSchedule(); renderCal(); closeCal();
+}
+document.addEventListener('click',function(e){
+  const cw=document.querySelector('.cal-wrap');
+  if(cw&&!cw.contains(e.target)) closeCal();
+});
+
+// ══════════════ SCHEDULE ══════════════
+function generateSlots(){
+  const slots=[];
+  const [sh,sm]=state.workStart.split(':').map(Number);
+  const [eh,em]=state.workEnd.split(':').map(Number);
+  let cur=sh*60+sm; const end=eh*60+em;
+  while(cur<=end){
+    const h=Math.floor(cur/60),m=cur%60;
+    slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+    cur+=15;
+  }
+  return slots;
+}
+
+function renderSchedule(){
+  updateDateDisp();
+  const slots=generateSlots();
+  const today=dateKey(currentDate);
+  const dayApts=state.appointments.filter(a=>a.date===today);
+  const tbody=document.getElementById('scheduleBody');
+  tbody.innerHTML='';
+  slots.forEach(time=>{
+    const isHour=time.endsWith(':00');
+    const apt=dayApts.find(a=>a.time===time);
+    const tr=document.createElement('tr');
+    if(apt){
+      const svc=state.services.find(s=>s.id===apt.service)||{name:'—'};
+      const clinic=state.clinics.find(c=>c.id===apt.clinicId);
+      const doctor=state.doctors.find(d=>d.id===apt.doctorId);
+      const stCls=apt.status==='arrived'?'st-arrived':apt.status==='missed'?'st-missed':'';
+      const dotCls=apt.status==='arrived'?'a':apt.status==='missed'?'m':'p';
+      const clinicStr=clinic?clinic.name:'—';
+      const doctorStr=doctor?doctor.name.split(' ').slice(0,2).join(' '):'—';
+      tr.innerHTML=`
+        <td class="tc ${isHour?'hr':''}">${time}</td>
+        <td class="sc" style="padding:2px 8px">
+          <div class="pcard ${stCls}" onclick="openModal('${time}','${apt.id}')">
+            <div class="cn">${apt.name}</div>
+            <div class="cp">${apt.phone||'—'}</div>
+            <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${clinicStr} / ${doctorStr}">${clinicStr}</div>
+            <div class="cs"><span class="stag">${svc.name}</span></div>
+            <div class="cst"><span class="sdot ${dotCls}"></span></div>
+          </div>
+        </td>`;
+    } else {
+      tr.innerHTML=`
+        <td class="tc ${isHour?'hr':''}">${time}</td>
+        <td class="sc">
+          <div class="add-hint" onclick="openModal('${time}',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Создать запись
+          </div>
+        </td>`;
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+// ══════════════ SEARCHABLE DROPDOWN ══════════════
+function initSD(wrapperId, inputId, listId, itemsGetter, onSelect) {
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  let selectedId = null;
+
+  function getItems(){ return itemsGetter(); }
+
+  function renderList(filter){
+    const q = (filter||'').toLowerCase();
+    const items = getItems();
+    const filtered = items.filter(i => i.label.toLowerCase().includes(q));
+    list.innerHTML = '';
+    if(!filtered.length){
+      list.innerHTML='<div class="sd-empty">Ничего не найдено</div>';
+      return;
+    }
+    filtered.forEach(i=>{
+      const d=document.createElement('div');
+      d.className='sd-item'+(i.id===selectedId?' active':'');
+      d.textContent=i.label;
+      d.onmousedown=(e)=>{
+        e.preventDefault();
+        selectedId=i.id;
+        input.value=i.label;
+        onSelect(i.id);
+        list.classList.remove('open');
+      };
+      list.appendChild(d);
+    });
+  }
+
+  input.addEventListener('focus',()=>{
+    renderList('');
+    list.classList.add('open');
+  });
+  input.addEventListener('input',()=>{
+    selectedId=null;
+    onSelect(null);
+    renderList(input.value);
+    list.classList.add('open');
+  });
+  input.addEventListener('blur',()=>{
+    setTimeout(()=>{
+      list.classList.remove('open');
+      // Restore label if selectedId set
+      if(selectedId){
+        const found=getItems().find(i=>i.id===selectedId);
+        if(found) input.value=found.label;
+        else { input.value=''; }
+      } else {
+        input.value='';
+      }
+    },150);
+  });
+
+  // Expose controls on DOM element
+  const wrap = document.getElementById(wrapperId);
+  wrap._sdGetId=()=>selectedId;
+  wrap._sdSetId=(id)=>{
+    selectedId=id;
+    if(id){
+      const found=getItems().find(i=>i.id===id);
+      input.value=found?found.label:'';
+    } else { input.value=''; }
+  };
+  wrap._sdClear=()=>{ selectedId=null; input.value=''; };
+}
+
+// ══════════════ MODAL APPOINTMENT ══════════════
+let editingId=null, pendingDeleteId=null, currentStatus='pending', currentPayment=null;
+
+function openModal(time, aptId){
+  editingId=aptId;
+  currentStatus='pending';
+  currentPayment=null;
+  clearForm();
+  populateServiceSelect();
+
+  // Init searchable dropdowns
+  initSD('sdDoctor','sdDoctorInput','sdDoctorList',
+    ()=>state.doctors.map(d=>({id:d.id,label:d.name+' ('+d.specialty+')'})),
+    (id)=>{ /* stored via wrap._sdGetId */ }
+  );
+  initSD('sdClinic','sdClinicInput','sdClinicList',
+    ()=>state.clinics.map(c=>({id:c.id,label:c.name+' — '+c.nameRu})),
+    (id)=>{}
+  );
+
+  if(aptId){
+    const apt=state.appointments.find(a=>a.id===aptId);
+    if(!apt) return;
+    document.getElementById('mTitle').textContent='Редактировать запись';
+    document.getElementById('mSub').textContent=`${apt.date} · ${apt.time}`;
+    document.getElementById('fName').value=apt.name||'';
+    document.getElementById('fPhone').value=apt.phone||'';
+    document.getElementById('fDob').value=apt.dob||'';
+    document.getElementById('fEmail').value=apt.email||'';
+    document.getElementById('fService').value=apt.service||'';
+    document.getElementById('fDiscount').value=apt.discount||'';
+    document.getElementById('sdDoctor').querySelector('input').dispatchEvent(new Event('custom')); // noop
+    document.getElementById('sdDoctor')._sdSetId(apt.doctorId||null);
+    document.getElementById('sdClinic')._sdSetId(apt.clinicId||null);
+    currentStatus=apt.status||'pending';
+    currentPayment=apt.payment||null;
+    document.getElementById('btnDelete').style.display='';
+  } else {
+    document.getElementById('mTitle').textContent='Новая запись';
+    document.getElementById('mSub').textContent=`${formatDate(currentDate)} · ${time}`;
+    document.getElementById('btnDelete').style.display='none';
+  }
+  updateStatusBtns();
+  updatePayBtns();
+  calcPrice();
+  checkSaveBtn();
+  document.getElementById('modalApt').classList.add('open');
+}
+
+function closeModal(){ document.getElementById('modalApt').classList.remove('open'); editingId=null; }
+
+function clearForm(){
+  ['fName','fPhone','fDob','fEmail','fDiscount'].forEach(id=>{
+    document.getElementById(id).value='';
+    document.getElementById(id).classList.remove('err');
+  });
+  ['eName','ePhone','eDob','eEmail','eDoctor','eClinic','eService','eDiscount'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='';
+  });
+  document.getElementById('fService').value='';
+  document.getElementById('pFinal').textContent='—';
+  document.getElementById('pOrig').textContent='';
+}
+
+function populateServiceSelect(){
+  const sel=document.getElementById('fService');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">— Выберите услугу —</option>';
+  const groups={'3d':[],'2d':[],'pkg':[]};
+  state.services.forEach(s=>{ if(groups[s.group]) groups[s.group].push(s); });
+  Object.entries(groups).forEach(([g,items])=>{
+    if(!items.length) return;
+    const og=document.createElement('optgroup');
+    og.label=GROUP_LABELS[g]||g;
+    items.forEach(s=>{
+      const o=document.createElement('option');
+      o.value=s.id;
+      o.dataset.price=s.price;
+      o.textContent=`${s.name} — ${s.price.toLocaleString('ru')} ₽`;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+  sel.value=prev;
+}
+
+function setStatus(s){ currentStatus=currentStatus===s?'pending':s; updateStatusBtns(); }
+function updateStatusBtns(){
+  document.getElementById('btnArrived').className='st-btn'+(currentStatus==='arrived'?' ac-a':'');
+  document.getElementById('btnMissed').className='st-btn'+(currentStatus==='missed'?' ac-m':'');
+}
+function setPayment(p){ currentPayment=currentPayment===p?null:p; updatePayBtns(); }
+function updatePayBtns(){
+  ['card','cash','transfer'].forEach(t=>{
+    document.getElementById('pay'+t[0].toUpperCase()+t.slice(1)).className='pay-btn'+(currentPayment===t?' ac':'');
+  });
+}
+function calcPrice(){
+  const sel=document.getElementById('fService');
+  const opt=sel.options[sel.selectedIndex];
+  const base=opt&&opt.dataset.price?parseInt(opt.dataset.price):0;
+  const discStr=document.getElementById('fDiscount').value.trim();
+  const disc=discStr!==''?parseFloat(discStr):0;
+  if(!base){document.getElementById('pFinal').textContent='—';document.getElementById('pOrig').textContent='';return;}
+  const final=disc>0?Math.round(base*(1-disc/100)):base;
+  document.getElementById('pFinal').textContent=final.toLocaleString('ru')+' ₽';
+  document.getElementById('pOrig').textContent=disc>0?base.toLocaleString('ru')+' ₽':'';
+}
+
+// ══════════════ AUTOCAP + SAVE BTN ══════════════
+function autoCapFio(input){
+  const pos=input.selectionStart;
+  input.value=input.value.replace(/[а-яёa-z]+/gi,w=>w[0].toUpperCase()+w.slice(1));
+  input.setSelectionRange(pos,pos);
+}
+function checkSaveBtn(){
+  const name=(document.getElementById('fName').value||'').trim();
+  const phone=(document.getElementById('fPhone').value||'').replace(/\D/g,'');
+  document.getElementById('btnSave').disabled=!(name.length>0&&phone.length>=10);
+}
+
+// ══════════════ PHONE MASK ══════════════
+document.getElementById('fPhone').addEventListener('input',function(){
+  let v=this.value.replace(/\D/g,'');
+  if(!v.startsWith('7')) v='7'+v;
+  v=v.slice(0,11);
+  let f='+7';
+  if(v.length>1) f+=' ('+v.slice(1,4);
+  if(v.length>4) f+=') '+v.slice(4,7);
+  if(v.length>7) f+='-'+v.slice(7,9);
+  if(v.length>9) f+='-'+v.slice(9,11);
+  this.value=f;
+  checkSaveBtn();
+});
+
+// ══════════════ VALIDATE ══════════════
+function validateForm(){
+  let ok=true;
+  function setErr(field,errId,msg){
+    const el=document.getElementById(field);
+    const er=document.getElementById(errId);
+    if(msg){el.classList.add('err');er.textContent=msg;ok=false;}
+    else{el.classList.remove('err');er.textContent='';}
+  }
+  // ФИО
+  const name=document.getElementById('fName').value.trim();
+  if(!name) setErr('fName','eName','Обязательное поле');
+  else if(!/^[А-ЯЁа-яёA-Za-z\s\-]+$/.test(name)) setErr('fName','eName','Только буквы, пробел и дефис');
+  else setErr('fName','eName','');
+  // Телефон
+  const phone=document.getElementById('fPhone').value.trim();
+  const digits=phone.replace(/\D/g,'');
+  if(!phone) setErr('fPhone','ePhone','Обязательное поле');
+  // [БАГ 4]: проверяем digits.length < 10 вместо < 11. Принимает номер из 10 цифр.
+  else if(digits.length<10) setErr('fPhone','ePhone','Неверный формат телефона');
+  else setErr('fPhone','ePhone','');
+  // Дата рождения
+  const dob=document.getElementById('fDob').value;
+  if(!dob) setErr('fDob','eDob','Обязательное поле');
+  // [БАГ 2]: нет проверки что дата < сегодня. Принимает 2099-01-01.
+  else setErr('fDob','eDob','');
+  // Email
+  const email=document.getElementById('fEmail').value.trim();
+  if(email){
+    // [БАГ 1]: regex без проверки TLD. test@domain пройдёт валидацию.
+    if(!/^[^\s@]+@[^\s@]+$/.test(email)) setErr('fEmail','eEmail','Некорректный email');
+    else setErr('fEmail','eEmail','');
+  } else setErr('fEmail','eEmail','');
+  // Врач
+  const doctorId=document.getElementById('sdDoctor')._sdGetId?document.getElementById('sdDoctor')._sdGetId():null;
+  if(!doctorId){
+    document.getElementById('sdDoctorInput').classList.add('err');
+    document.getElementById('eDoctor').textContent='Выберите врача';
+    ok=false;
+  } else {
+    document.getElementById('sdDoctorInput').classList.remove('err');
+    document.getElementById('eDoctor').textContent='';
+  }
+  // Клиника
+  const clinicId=document.getElementById('sdClinic')._sdGetId?document.getElementById('sdClinic')._sdGetId():null;
+  if(!clinicId){
+    document.getElementById('sdClinicInput').classList.add('err');
+    document.getElementById('eClinic').textContent='Выберите клинику';
+    ok=false;
+  } else {
+    document.getElementById('sdClinicInput').classList.remove('err');
+    document.getElementById('eClinic').textContent='';
+  }
+  // Услуга
+  const service=document.getElementById('fService').value;
+  if(!service){
+    document.getElementById('fService').classList.add('err');
+    document.getElementById('eService').textContent='Выберите услугу';
+    ok=false;
+  } else {
+    document.getElementById('fService').classList.remove('err');
+    document.getElementById('eService').textContent='';
+  }
+  // Скидка
+  const discVal=document.getElementById('fDiscount').value.trim();
+  if(discVal!==''){
+    const d=parseFloat(discVal);
+    // [БАГ 5]: проверяем только d > 100, но не d <= 0. Принимает 0 и отрицательные.
+    if(isNaN(d)||d>100) setErr('fDiscount','eDiscount','Скидка от 1 до 100%');
+    else setErr('fDiscount','eDiscount','');
+  } else setErr('fDiscount','eDiscount','');
+  return ok;
+}
+
+// ══════════════ SAVE / DELETE ══════════════
+function saveAppointment(){
+  if(!validateForm()) return;
+  const sel=document.getElementById('fService');
+  const opt=sel.options[sel.selectedIndex];
+  const basePrice=opt&&opt.dataset.price?parseInt(opt.dataset.price):0;
+  const discStr=document.getElementById('fDiscount').value.trim();
+  const disc=discStr!==''?parseFloat(discStr):0;
+  const totalPrice=disc>0?Math.round(basePrice*(1-disc/100)):basePrice;
+  const mSub=document.getElementById('mSub').textContent;
+  const timePart=editingId?(state.appointments.find(a=>a.id===editingId)||{}).time:mSub.split(' · ')[1];
+  const doctorId=document.getElementById('sdDoctor')._sdGetId();
+  const clinicId=document.getElementById('sdClinic')._sdGetId();
+  const apt={
+    id:editingId||uid(),
+    date:dateKey(currentDate),
+    time:timePart||'09:00',
+    name:document.getElementById('fName').value.trim(),
+    phone:document.getElementById('fPhone').value.trim(),
+    dob:document.getElementById('fDob').value,
+    email:document.getElementById('fEmail').value.trim(),
+    clinicId, doctorId,
+    service:document.getElementById('fService').value,
+    discount:disc,
+    // [БАГ 3]: в отчёт попадает basePrice (без скидки), а не totalPrice
+    servicePrice:basePrice,
+    totalPrice,
+    status:currentStatus,
+    payment:currentPayment,
+  };
+  if(editingId){
+    const idx=state.appointments.findIndex(a=>a.id===editingId);
+    if(idx>=0) state.appointments[idx]=apt;
+  } else {
+    state.appointments.push(apt);
+  }
+  save(); closeModal(); renderSchedule(); showToast('Запись сохранена','ok');
+}
+function confirmDelete(){ pendingDeleteId=editingId; document.getElementById('modalConfirm').classList.add('open'); }
+function closeConfirm(){ document.getElementById('modalConfirm').classList.remove('open'); pendingDeleteId=null; }
+function executeDelete(){
+  if(!pendingDeleteId) return;
+  state.appointments=state.appointments.filter(a=>a.id!==pendingDeleteId);
+  save(); closeConfirm(); closeModal(); renderSchedule(); showToast('Запись удалена','er');
+}
+
+// ══════════════ CLINICS ══════════════
+let editingClinicId=null;
+function renderClinics(){
+  const isAdmin=currentRole==='admin';
+  const grid=document.getElementById('clinicsGrid');
+  grid.innerHTML='';
+  state.clinics.forEach(c=>{
+    const div=document.createElement('div'); div.className='card';
+    div.innerHTML=`
+      <div class="ctitle">${c.name}</div>
+      <div class="cmeta">${c.nameRu}</div>
+      <div class="cmeta" style="margin-top:3px">${c.address||''}</div>
+      ${isAdmin?`<div class="cacts">
+        <button class="cbtn edit" onclick="openEditClinic('${c.id}')" title="Редактировать">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="cbtn del" onclick="deleteClinic('${c.id}')" title="Удалить">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </button>
+      </div>`:''}`;
+    grid.appendChild(div);
+  });
+  if(isAdmin){
+    const add=document.createElement('div'); add.className='add-card';
+    add.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Добавить клинику`;
+    add.onclick=()=>openAddClinic();
+    grid.appendChild(add);
+  }
+}
+function openAddClinic(){
+  editingClinicId=null;
+  document.getElementById('mcTitle').textContent='Добавить клинику';
+  ['cNameEn','cNameRu','cAddr'].forEach(id=>document.getElementById(id).value='');
+  ['ecNameEn','ecNameRu'].forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('modalClinic').classList.add('open');
+}
+function openEditClinic(id){
+  const c=state.clinics.find(x=>x.id===id); if(!c) return;
+  editingClinicId=id;
+  document.getElementById('mcTitle').textContent='Редактировать клинику';
+  document.getElementById('cNameEn').value=c.name;
+  document.getElementById('cNameRu').value=c.nameRu;
+  document.getElementById('cAddr').value=c.address||'';
+  ['ecNameEn','ecNameRu'].forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('modalClinic').classList.add('open');
+}
+function closeModalClinic(){ document.getElementById('modalClinic').classList.remove('open'); editingClinicId=null; }
+function saveClinic(){
+  const en=document.getElementById('cNameEn').value.trim();
+  const ru=document.getElementById('cNameRu').value.trim();
+  let ok=true;
+  if(!en){document.getElementById('ecNameEn').textContent='Обязательное поле';ok=false;}else document.getElementById('ecNameEn').textContent='';
+  if(!ru){document.getElementById('ecNameRu').textContent='Обязательное поле';ok=false;}else document.getElementById('ecNameRu').textContent='';
+  if(!ok) return;
+  const addr=document.getElementById('cAddr').value.trim();
+  if(editingClinicId){
+    const idx=state.clinics.findIndex(c=>c.id===editingClinicId);
+    if(idx>=0) state.clinics[idx]={...state.clinics[idx],name:en,nameRu:ru,address:addr};
+    showToast('Клиника обновлена','ok');
+  } else {
+    state.clinics.push({id:uid(),name:en,nameRu:ru,address:addr});
+    showToast('Клиника добавлена','ok');
+  }
+  save(); closeModalClinic(); renderClinics();
+}
+function deleteClinic(id){
+  state.clinics=state.clinics.filter(c=>c.id!==id);
+  save(); renderClinics(); showToast('Клиника удалена','er');
+}
+
+// ══════════════ DOCTORS ══════════════
+let editingDoctorId=null;
+function renderDoctors(){
+  const isAdmin=currentRole==='admin';
+  const grid=document.getElementById('doctorsGrid');
+  grid.innerHTML='';
+  state.doctors.forEach(d=>{
+    const div=document.createElement('div'); div.className='card';
+    div.innerHTML=`
+      <div class="ctitle">${d.name}</div>
+      <div class="cmeta">${d.specialty||''}</div>
+      ${isAdmin?`<div class="cacts">
+        <button class="cbtn edit" onclick="openEditDoctor('${d.id}')" title="Редактировать">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="cbtn del" onclick="deleteDoctor('${d.id}')" title="Удалить">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </button>
+      </div>`:''}`;
+    grid.appendChild(div);
+  });
+  if(isAdmin){
+    const add=document.createElement('div'); add.className='add-card';
+    add.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Добавить врача`;
+    add.onclick=()=>openAddDoctor();
+    grid.appendChild(add);
+  }
+}
+function openAddDoctor(){
+  editingDoctorId=null;
+  document.getElementById('mdTitle').textContent='Добавить врача';
+  ['dName','dSpec'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('edName').textContent='';
+  document.getElementById('modalDoctor').classList.add('open');
+}
+function openEditDoctor(id){
+  const d=state.doctors.find(x=>x.id===id); if(!d) return;
+  editingDoctorId=id;
+  document.getElementById('mdTitle').textContent='Редактировать врача';
+  document.getElementById('dName').value=d.name;
+  document.getElementById('dSpec').value=d.specialty||'';
+  document.getElementById('edName').textContent='';
+  document.getElementById('modalDoctor').classList.add('open');
+}
+function closeModalDoctor(){ document.getElementById('modalDoctor').classList.remove('open'); editingDoctorId=null; }
+function saveDoctor(){
+  const n=document.getElementById('dName').value.trim();
+  if(!n){document.getElementById('edName').textContent='Обязательное поле';return;}
+  document.getElementById('edName').textContent='';
+  const spec=document.getElementById('dSpec').value.trim();
+  if(editingDoctorId){
+    const idx=state.doctors.findIndex(d=>d.id===editingDoctorId);
+    if(idx>=0) state.doctors[idx]={...state.doctors[idx],name:n,specialty:spec};
+    showToast('Врач обновлён','ok');
+  } else {
+    state.doctors.push({id:uid(),name:n,specialty:spec});
+    showToast('Врач добавлен','ok');
+  }
+  save(); closeModalDoctor(); renderDoctors();
+}
+function deleteDoctor(id){
+  state.doctors=state.doctors.filter(d=>d.id!==id);
+  save(); renderDoctors(); showToast('Врач удалён','er');
+}
+
+// ══════════════ SERVICES ══════════════
+let editingServiceId=null;
+function renderServices(){
+  const isAdmin=currentRole==='admin';
+  const container=document.getElementById('servicesContent');
+  container.innerHTML='';
+  const groups={'3d':[],'2d':[],'pkg':[]};
+  state.services.forEach(s=>{ if(groups[s.group]) groups[s.group].push(s); });
+  Object.entries(groups).forEach(([g,items])=>{
+    if(!items.length) return;
+    const sec=document.createElement('div'); sec.className='ssec';
+    const h=document.createElement('div'); h.className='stitle'; h.textContent=GROUP_LABELS[g]||g;
+    sec.appendChild(h);
+    items.forEach(s=>{
+      const saved=s.origPrice?s.origPrice-s.price:0;
+      const row=document.createElement('div'); row.className='srow';
+      row.innerHTML=`
+        <span class="sname">${s.name}${g==='pkg'?'<span class="spkg">Пакет</span>':''}${saved>0?`<span class="ssaved">Экономия ${saved.toLocaleString('ru')} ₽</span>`:''}</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          ${s.origPrice?`<span class="sorig">${s.origPrice.toLocaleString('ru')} ₽</span>`:''}
+          <span class="sprice">${s.price.toLocaleString('ru')} ₽</span>
+          ${isAdmin?`<button class="cbtn edit srow-acts" style="opacity:1;position:static;margin-left:6px" onclick="openEditService('${s.id}')" title="Редактировать">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>`:''}
+        </span>`;
+      sec.appendChild(row);
+    });
+    container.appendChild(sec);
+  });
+}
+function openEditService(id){
+  const s=state.services.find(x=>x.id===id); if(!s) return;
+  editingServiceId=id;
+  document.getElementById('svName').value=s.name;
+  document.getElementById('svPrice').value=s.price;
+  document.getElementById('svOrigPrice').value=s.origPrice||'';
+  document.getElementById('svOrigPriceWrap').style.display=s.group==='pkg'?'':'none';
+  ['esvName','esvPrice'].forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('modalService').classList.add('open');
+}
+function closeModalService(){ document.getElementById('modalService').classList.remove('open'); editingServiceId=null; }
+function saveService(){
+  const n=document.getElementById('svName').value.trim();
+  const p=parseFloat(document.getElementById('svPrice').value);
+  let ok=true;
+  if(!n){document.getElementById('esvName').textContent='Обязательное поле';ok=false;}else document.getElementById('esvName').textContent='';
+  // [БАГ 9]: нет проверки p < 1. Принимает цену 0 ₽.
+  if(isNaN(p)){document.getElementById('esvPrice').textContent='Введите корректную цену';ok=false;}else document.getElementById('esvPrice').textContent='';
+  if(!ok) return;
+  const orig=parseFloat(document.getElementById('svOrigPrice').value)||null;
+  if(editingServiceId){
+    const idx=state.services.findIndex(s=>s.id===editingServiceId);
+    if(idx>=0) state.services[idx]={...state.services[idx],name:n,price:p,origPrice:orig||undefined};
+    showToast('Услуга обновлена','ok');
+  }
+  save(); closeModalService(); renderServices(); populateServiceSelect();
+}
+
+// ══════════════ REPORTS ══════════════
+let reportSortField=null, reportSortDir=1;
+function renderReports(){
+  const from=document.getElementById('rDateFrom').value;
+  const to=document.getElementById('rDateTo').value;
+  const payF=document.getElementById('rPayFilter').value;
+  let apts=[...state.appointments];
+  if(from) apts=apts.filter(a=>a.date>=from);
+  if(to) apts=apts.filter(a=>a.date<=to);
+  if(payF) apts=apts.filter(a=>a.payment===payF);
+  if(reportSortField){
+    apts.sort((a,b)=>{
+      let va,vb;
+      if(reportSortField==='name'){va=a.name||'';vb=b.name||'';}
+      else if(reportSortField==='service'){va=(state.services.find(s=>s.id===a.service)||{}).name||'';vb=(state.services.find(s=>s.id===b.service)||{}).name||'';}
+      else if(reportSortField==='date'){va=a.date+a.time;vb=b.date+b.time;}
+      else if(reportSortField==='price'){return((a.servicePrice||0)-(b.servicePrice||0))*reportSortDir;}
+      // [БАГ 6]: сортировка строк без localeCompare — кириллица сортируется некорректно
+      return(va>vb?1:va<vb?-1:0)*reportSortDir;
+    });
+  }
+  const tbody=document.getElementById('reportBody');
+  tbody.innerHTML='';
+  if(!apts.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Нет данных за выбранный период</td></tr>`;
+  } else {
+    apts.forEach(a=>{
+      const svc=state.services.find(s=>s.id===a.service)||{name:'—'};
+      const payLabels={card:'💳 Карта',cash:'💵 Наличные',transfer:'📲 Перевод'};
+      const statusBadge=a.status==='arrived'?'<span class="badge bg">Пришёл</span>':a.status==='missed'?'<span class="badge br">Не пришёл</span>':'<span class="badge bk">Ожидается</span>';
+      const tr=document.createElement('tr');
+      // [БАГ 3]: отображается basePrice (без скидки), а не totalPrice
+      tr.innerHTML=`
+        <td>${a.name}</td>
+        <td>${svc.name}</td>
+        <td>${a.date||'—'}</td>
+        <td style="font-variant-numeric:tabular-nums;font-weight:500">${(a.servicePrice||0).toLocaleString('ru')} ₽</td>
+        <td>${payLabels[a.payment]||'<span style="color:var(--text3)">—</span>'}</td>
+        <td>${statusBadge}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  // [БАГ 7]: пациенты «не пришёл» включаются в финансовые итоги
+  let totAll=0,totCard=0,totCash=0,totTransfer=0;
+  apts.forEach(a=>{
+    const amt=a.servicePrice||0;
+    totAll+=amt;
+    if(a.payment==='card') totCard+=amt;
+    if(a.payment==='cash') totCash+=amt;
+    if(a.payment==='transfer') totTransfer+=amt;
+  });
+  document.getElementById('totAll').textContent=totAll.toLocaleString('ru')+' ₽';
+  document.getElementById('totCard').textContent=totCard.toLocaleString('ru')+' ₽';
+  document.getElementById('totCash').textContent=totCash.toLocaleString('ru')+' ₽';
+  document.getElementById('totTransfer').textContent=totTransfer.toLocaleString('ru')+' ₽';
+}
+function sortReport(f){ if(reportSortField===f) reportSortDir*=-1; else{reportSortField=f;reportSortDir=1;} renderReports(); }
+function clearReportFilters(){
+  document.getElementById('rDateFrom').value='';
+  document.getElementById('rDateTo').value='';
+  document.getElementById('rPayFilter').value='';
+  renderReports();
+}
+
+// ══════════════ SETTINGS ══════════════
+function renderSettings(){
+  document.getElementById('workStart').value=state.workStart||'09:00';
+  document.getElementById('workEnd').value=state.workEnd||'20:00';
+  const list=document.getElementById('branchList');
+  list.innerHTML='';
+  state.branches.forEach(b=>{
+    const row=document.createElement('div'); row.className='branch-row';
+    row.innerHTML=`
+      <div><div class="branch-name">${b.name}</div><div class="branch-addr">${b.address||''}</div></div>
+      <div class="branch-actions">
+        <button class="cbtn del" onclick="deleteBranch('${b.id}')" title="Удалить">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </button>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+function saveWorkTime(){ state.workStart=document.getElementById('workStart').value; state.workEnd=document.getElementById('workEnd').value; save(); showToast('Рабочее время сохранено','ok'); }
+function deleteBranch(id){ state.branches=state.branches.filter(b=>b.id!==id); save(); renderSettings(); showToast('Филиал удалён','er'); }
+function openAddBranch(){ document.getElementById('bName').value=''; document.getElementById('bAddr').value=''; ['ebName','ebAddr'].forEach(id=>document.getElementById(id).textContent=''); document.getElementById('modalBranch').classList.add('open'); }
+function closeModalBranch(){ document.getElementById('modalBranch').classList.remove('open'); }
+function saveBranch(){
+  const n=document.getElementById('bName').value.trim();
+  const a=document.getElementById('bAddr').value.trim();
+  let ok=true;
+  if(!n){document.getElementById('ebName').textContent='Обязательное поле';ok=false;}else document.getElementById('ebName').textContent='';
+  if(!a){document.getElementById('ebAddr').textContent='Обязательное поле';ok=false;}else document.getElementById('ebAddr').textContent='';
+  if(!ok) return;
+  state.branches.push({id:uid(),name:n,address:a});
+  save(); closeModalBranch(); renderSettings(); showToast('Филиал добавлен','ok');
+}
+
+// ══════════════ OVERLAY CLOSE ══════════════
+['modalApt','modalClinic','modalDoctor','modalService','modalBranch'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); });
+});
+document.getElementById('modalConfirm').addEventListener('click',function(e){ if(e.target===this) closeConfirm(); });
+
+// ══════════════ ENTER ON LOGIN ══════════════
+document.getElementById('loginPass').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+
+// ══════════════ TOAST ══════════════
+let toastTimer;
+function showToast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ══════════════ INIT ══════════════
+load();
+calViewYear=currentDate.getFullYear();
+calViewMonth=currentDate.getMonth();
+checkAuth();
+</script>
+</body>
+</html>
